@@ -3,14 +3,12 @@
   "version": "1.0.0",
   "description": "MERN Stack Passenger Management System with CRUD operations",
   "scripts": {
-  "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-
   "dev": "concurrently \"npm run dev-server\" \"npm run dev-client\"",
 
   "dev-server": "cd server && npm run dev",
   "dev-client": "cd client && npm start",
 
-  "build": "cd client && npm install && npm run build",
+  "build": "npm install && cd server && npm install && cd ../client && npm install && npm run build",
 
   "start": "cd server && npm start"
 }
