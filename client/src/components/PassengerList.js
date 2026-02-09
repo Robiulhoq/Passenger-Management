@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import passengerService from '../services/passengerService';
+import * as XLSX from 'xlsx';
 import './PassengerList.css';
 
 const PassengerList = ({ refreshTrigger, editPassenger }) => {
@@ -9,6 +10,58 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
+
+  // Format date to YYYY-MM-DD
+  const formatDate = (date) => {
+    if (!date) return '';
+    return new Date(date).toISOString().split('T')[0];
+  };
+
+  // Export to Excel
+  const exportToExcel = () => {
+    if (sortedPassengers.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    // Create data for Excel
+    const excelData = sortedPassengers.map(passenger => ({
+      'Passenger Name': passenger.passengerName || '',
+      'Passport': passenger.passport || '',
+      'Registration No': passenger.registrationNo || '',
+      'Registration Date': formatDate(passenger.registrationDate) || '',
+      'Report': passenger.report || '',
+      'Unfit Comment': passenger.unfitCom || '',
+      'Wafid Status': passenger.wafidStatus || '',
+      'Slip File': passenger.slipFileSubmit ? 'Yes' : 'No',
+      'Payment Received': passenger.slipPaymentReceive ? parseFloat(passenger.slipPaymentReceive).toFixed(2) : '0.00',
+      'Commission': passenger.commission ? parseFloat(passenger.commission).toFixed(2) : '0.00',
+      'Payment Sent': passenger.slipPaymentSend ? parseFloat(passenger.slipPaymentSend).toFixed(2) : '0.00',
+      'Sender': passenger.sender || '',
+    }));
+
+    // Create Excel workbook
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Passengers');
+
+    // Set column widths
+    const colWidths = [20, 15, 15, 18, 12, 20, 15, 12, 18, 15, 15, 15];
+    worksheet['!cols'] = colWidths.map(w => ({ wch: w }));
+
+    // Generate filename with date range if filters are active
+    let filename = 'passengers_export.xlsx';
+    if (filterFromDate || filterToDate) {
+      const from = filterFromDate || 'start';
+      const to = filterToDate || 'end';
+      filename = `passengers_export_${from}_to_${to}.xlsx`;
+    }
+
+    // Write file
+    XLSX.writeFile(workbook, filename);
+  };
 
   useEffect(() => {
     fetchPassengers();
@@ -81,6 +134,19 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     } else {
       return aVal < bVal ? 1 : -1;
     }
+  }).filter(passenger => {
+    // Filter by date range if dates are specified
+    if (filterFromDate || filterToDate) {
+      const passengerDate = formatDate(passenger.registrationDate);
+      
+      if (filterFromDate && passengerDate < filterFromDate) {
+        return false;
+      }
+      if (filterToDate && passengerDate > filterToDate) {
+        return false;
+      }
+    }
+    return true;
   });
 
   if (loading && passengers.length === 0) {
@@ -101,6 +167,45 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
         </div>
       </div>
 
+      <div className="filter-section">
+        <div className="filter-group">
+          <label htmlFor="fromDate">From Date:</label>
+          <input
+            type="date"
+            id="fromDate"
+            value={filterFromDate}
+            onChange={(e) => setFilterFromDate(e.target.value)}
+          />
+        </div>
+        <div className="filter-group">
+          <label htmlFor="toDate">To Date:</label>
+          <input
+            type="date"
+            id="toDate"
+            value={filterToDate}
+            onChange={(e) => setFilterToDate(e.target.value)}
+          />
+        </div>
+        {(filterFromDate || filterToDate) && (
+          <button
+            className="clear-filter-btn"
+            onClick={() => {
+              setFilterFromDate('');
+              setFilterToDate('');
+            }}
+          >
+            Clear Filter
+          </button>
+        )}
+        <button
+          className="export-btn"
+          onClick={exportToExcel}
+          disabled={passengers.length === 0}
+        >
+          📥 Export to Excel
+        </button>
+      </div>
+
       {error && <div className="error-message">{error}</div>}
 
       {passengers.length === 0 ? (
@@ -119,8 +224,14 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
                 <th onClick={() => handleSort('registrationNo')}>
                   Reg No {sortBy === 'registrationNo' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
+                <th onClick={() => handleSort('registrationDate')}>
+                  Reg Date {sortBy === 'registrationDate' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
                 <th onClick={() => handleSort('code')}>
                   Report {sortBy === 'report' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => handleSort('unfitCom')}>
+                  Unfit Com. {sortBy === 'unfitCom' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th onClick={() => handleSort('wafidStatus')}>
                   Wafid Status {sortBy === 'wafidStatus' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -147,7 +258,13 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
                   <td>{passenger.passengerName}</td>
                   <td>{passenger.passport}</td>
                   <td>{passenger.registrationNo}</td>
-                  <td>{passenger.report}</td>
+                  <td>{formatDate(passenger.registrationDate)}</td>
+                  <td>
+                    <span className={`report-badge report-${(passenger.report || '').toLowerCase()}`}>
+                      {passenger.report}
+                    </span>
+                  </td>
+                  <td>{passenger.unfitCom}</td>
                   <td>
                     <span className={`status-badge status-${passenger.wafidStatus.toLowerCase()}`}>
                       {passenger.wafidStatus}
@@ -181,7 +298,7 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
         </div>
       )}
       <div className="list-footer">
-        Total: {passengers.length} passengers
+        Total: {passengers.length} passengers {sortedPassengers.length !== passengers.length && `(${sortedPassengers.length} filtered)`}
       </div>
     </div>
   );

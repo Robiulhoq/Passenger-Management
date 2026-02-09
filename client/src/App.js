@@ -1,7 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PassengerForm from './components/PassengerForm';
 import PassengerList from './components/PassengerList';
+import LoginForm from './components/LoginForm';
 import passengerService from './services/passengerService';
+import authService from './services/authService';
 import './App.css';
 
 function App() {
@@ -9,6 +11,17 @@ function App() {
   const [selectedPassenger, setSelectedPassenger] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const handleAddPassenger = useCallback(async (formData) => {
     try {
@@ -46,12 +59,36 @@ function App() {
     setSelectedPassenger(null);
   };
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    setActiveTab('list');
+    setSelectedPassenger(null);
+  };
+
+  // If not authenticated, show login form
+  if (!isAuthenticated) {
+    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-content">
           <h1>Passenger Management System</h1>
-          <p>MERN Stack CRUD Application</p>
+          <p>A Completed Business Solutions</p>
+        </div>
+        <div className="header-user">
+          <span className="user-name">Welcome, {currentUser?.userName}</span>
+          <button className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
 

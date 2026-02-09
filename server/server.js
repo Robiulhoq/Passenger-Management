@@ -21,6 +21,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Routes
 app.use('/api/passengers', require('./routes/passengerRoutes'));
+app.use('/api/auth', require('./routes/loginRoutes'));
 
 // Basic route
 app.get('/', (req, res) => {
