@@ -4,7 +4,7 @@ const Login = require('../models/Login');
 exports.loginUser = async (req, res) => {
   try {
     const { userName, password } = req.body;
-    console.log(typeof(userName), password);
+   
     
 
     if (!userName || !password) {
@@ -14,7 +14,7 @@ exports.loginUser = async (req, res) => {
     }
 
     const user = await Login.findOne({ userName });
-    console.log(user);
+    
     
 
     if (!user) {
@@ -25,7 +25,7 @@ exports.loginUser = async (req, res) => {
 
     // Simple password comparison (in production, use bcrypt)
     // Handle both 'password' and 'Password' field names, and convert to string for comparison
-    const dbPassword = String(user.password || user.Password);
+    const dbPassword = String(user.password || user.password);
     if (dbPassword !== String(password)) {
       return res.status(401).json({
         message: 'Invalid username or password',
