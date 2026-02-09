@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: passenger-management-api
+    env: node
+    plan: free
+    branch: main
+    root_dir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
