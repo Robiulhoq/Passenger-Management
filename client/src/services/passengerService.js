@@ -1,4 +1,5 @@
 import axios from 'axios';
+import exportUtils from '../utils/exportUtils';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const API_URL = "/api/passengers";
@@ -61,6 +62,37 @@ const passengerService = {
       return response.data.data;
     } catch (error) {
       console.error('Error searching passengers:', error);
+      throw error;
+    }
+  },
+
+  bulkImportPassengers: async (data) => {
+    try {
+      const response = await axios.post(`${API_URL}/bulk-import`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk importing passengers:', error);
+      throw error;
+    }
+  },
+
+  exportAllPassengers: async () => {
+    try {
+      const passengers = await passengerService.getAllPassengers();
+      exportUtils.exportFilteredToExcel(passengers, 'all');
+      return { success: true, message: 'Export successful' };
+    } catch (error) {
+      console.error('Error exporting passengers:', error);
+      throw error;
+    }
+  },
+
+  exportPassengers: (passengers, filename) => {
+    try {
+      exportUtils.exportPassengersToExcel(passengers, filename);
+      return { success: true, message: 'Export successful' };
+    } catch (error) {
+      console.error('Error exporting passengers:', error);
       throw error;
     }
   }

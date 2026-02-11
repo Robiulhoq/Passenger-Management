@@ -137,3 +137,61 @@ exports.searchPassengers = async (req, res) => {
     });
   }
 };
+
+// Bulk import passengers from Excel
+exports.bulkImportPassengers = async (req, res) => {
+  try {
+    const passengers = req.body;
+    
+    if (!Array.isArray(passengers) || passengers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No passengers provided for import',
+        imported: 0,
+        failed: 0
+      });
+    }
+
+    let imported = 0;
+    let failed = 0;
+    const details = [];
+
+    // Process each passenger
+    for (let i = 0; i < passengers.length; i++) {
+      try {
+        const passengerData = passengers[i];
+
+        // Validate required fields
+        if (!passengerData.passengerName || !passengerData.passport || !passengerData.registrationNo) {
+          failed++;
+          details.push(`Row ${i + 1}: Missing required fields (Passenger Name, Passport, or Registration No)`);
+          continue;
+        }
+
+        // Create new passenger
+        const passenger = new Passenger(passengerData);
+        await passenger.save();
+        imported++;
+      } catch (error) {
+        failed++;
+        details.push(`Row ${i + 1}: ${error.message}`);
+      }
+    }
+
+    res.status(201).json({
+      success: failed === 0,
+      message: `Import completed: ${imported} imported, ${failed} failed`,
+      imported,
+      failed,
+      details: details.length > 0 ? details : undefined
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error during bulk import',
+      error: error.message,
+      imported: 0,
+      failed: 0
+    });
+  }
+};

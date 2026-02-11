@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import passengerService from '../services/passengerService';
-import * as XLSX from 'xlsx';
+import exportUtils from '../utils/exportUtils';
 import './PassengerList.css';
 
 const PassengerList = ({ refreshTrigger, editPassenger }) => {
@@ -26,41 +26,31 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
       return;
     }
 
-    // Create data for Excel
-    const excelData = sortedPassengers.map(passenger => ({
-      'Passenger Name': passenger.passengerName || '',
-      'Passport': passenger.passport || '',
-      'Registration No': passenger.registrationNo || '',
-      'Registration Date': formatDate(passenger.registrationDate) || '',
-      'Report': passenger.report || '',
-      'Unfit Comment': passenger.unfitCom || '',
-      'Wafid Status': passenger.wafidStatus || '',
-      'Slip File': passenger.slipFileSubmit ? 'Yes' : 'No',
-      'Payment Received': passenger.slipPaymentReceive ? parseFloat(passenger.slipPaymentReceive).toFixed(2) : '0.00',
-      'Commission': passenger.commission ? parseFloat(passenger.commission).toFixed(2) : '0.00',
-      'Payment Sent': passenger.slipPaymentSend ? parseFloat(passenger.slipPaymentSend).toFixed(2) : '0.00',
-      'Sender': passenger.sender || '',
-    }));
+    try {
+      // Generate filename with date range if filters are active
+      let filename = 'passengers_export.xlsx';
+      if (filterFromDate || filterToDate) {
+        const from = filterFromDate || 'start';
+        const to = filterToDate || 'end';
+        filename = `passengers_export_${from}_to_${to}.xlsx`;
+      }
 
-    // Create Excel workbook
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Passengers');
-
-    // Set column widths
-    const colWidths = [20, 15, 15, 18, 12, 20, 15, 12, 18, 15, 15, 15];
-    worksheet['!cols'] = colWidths.map(w => ({ wch: w }));
-
-    // Generate filename with date range if filters are active
-    let filename = 'passengers_export.xlsx';
-    if (filterFromDate || filterToDate) {
-      const from = filterFromDate || 'start';
-      const to = filterToDate || 'end';
-      filename = `passengers_export_${from}_to_${to}.xlsx`;
+      exportUtils.exportPassengersToExcel(sortedPassengers, filename);
+      alert('Export successful!');
+    } catch (error) {
+      alert('Export failed: ' + error.message);
     }
+  };
 
-    // Write file
-    XLSX.writeFile(workbook, filename);
+  // Export all passengers
+  const exportAllPassengers = () => {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      exportUtils.exportPassengersToExcel(passengers, `all_passengers_${timestamp}.xlsx`);
+      alert('Export successful!');
+    } catch (error) {
+      alert('Export failed: ' + error.message);
+    }
   };
 
   useEffect(() => {
@@ -201,8 +191,17 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
           className="export-btn"
           onClick={exportToExcel}
           disabled={passengers.length === 0}
+          title="Export visible/filtered data"
         >
-          📥 Export to Excel
+          📥 Export Filtered
+        </button>
+        <button
+          className="export-all-btn"
+          onClick={exportAllPassengers}
+          disabled={passengers.length === 0}
+          title="Export all passengers"
+        >
+          📤 Export All
         </button>
       </div>
 

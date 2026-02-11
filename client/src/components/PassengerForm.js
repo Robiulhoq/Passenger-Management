@@ -168,7 +168,7 @@ const PassengerForm = ({ onSubmit, initialData, isEdit }) => {
             <select name="wafidStatus" value={formData.wafidStatus} onChange={handleChange}>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
+              <option value="Rejected">Not Found</option>
               <option value="On Hold">On Hold</option>
             </select>
           </div>
@@ -189,9 +189,9 @@ const PassengerForm = ({ onSubmit, initialData, isEdit }) => {
           <div className="form-group">
             <label>Report</label>
             <select name="report" value={formData.report} onChange={handleChange}>
-              <option value="FIT">FIT</option>
-              <option value="UNFIT">UNFIT</option>
-              <option value="HELD-UP">HELD-UP</option>
+              <option value="FIT">Fit</option>
+              <option value="UNFIT">Unfit</option>
+              <option value="HELD-UP">Held-Up</option>
             </select>
           </div>
         </div>

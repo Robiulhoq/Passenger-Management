@@ -4,6 +4,7 @@ const passengerController = require('../controllers/passengerController');
 
 // CRUD Routes
 router.get('/', passengerController.getAllPassengers);
+router.post('/bulk-import', passengerController.bulkImportPassengers);
 router.get('/search', passengerController.searchPassengers);
 router.get('/:id', passengerController.getPassengerById);
 router.post('/', passengerController.createPassenger);

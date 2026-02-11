@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import PassengerForm from './components/PassengerForm';
 import PassengerList from './components/PassengerList';
+import ExcelUpload from './components/ExcelUpload';
 import LoginForm from './components/LoginForm';
 import passengerService from './services/passengerService';
 import authService from './services/authService';
@@ -34,6 +35,13 @@ function App() {
       console.error('Error adding passenger:', error);
       alert('Error adding passenger: ' + error.message);
     }
+  }, []);
+
+  const handleUploadSuccess = useCallback(() => {
+    setSuccessMessage('Passengers imported successfully!');
+    setRefreshTrigger(prev => prev + 1);
+    setActiveTab('list');
+    setTimeout(() => setSuccessMessage(''), 3000);
   }, []);
 
   const handleUpdatePassenger = useCallback(async (formData) => {
@@ -81,7 +89,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-content">
-          <h1>Passenger Management System</h1>
+          <h1>A MED MANAGER</h1>
           <p>A Completed Business Solutions</p>
         </div>
         <div className="header-user">
@@ -119,6 +127,15 @@ function App() {
         >
           ➕ Add Passenger
         </button>
+        <button
+          className={`nav-button ${activeTab === 'import' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('import');
+            handleCancelEdit();
+          }}
+        >
+          📤 Import Excel
+        </button>
       </nav>
 
       <main className="app-main">
@@ -146,6 +163,13 @@ function App() {
           <PassengerList
             refreshTrigger={refreshTrigger}
             editPassenger={handleEditPassenger}
+          />
+        )}
+
+        {activeTab === 'import' && (
+          <ExcelUpload
+            onSuccess={handleUploadSuccess}
+            onCancel={() => setActiveTab('list')}
           />
         )}
       </main>

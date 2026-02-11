@@ -1,0 +1,242 @@
+.excel-upload-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 2rem auto;
+}
+
+.excel-upload-container h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5rem;
+}
+
+.excel-upload-container h3 {
+  color: #555;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.excel-upload-container h4 {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeeba;
+  color: #856404;
+}
+
+.alert p {
+  margin: 0.5rem 0;
+}
+
+.alert ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.alert li {
+  margin: 0.25rem 0;
+}
+
+.upload-section {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border: 2px dashed #007bff;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.file-input-label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.file-input {
+  display: inline-block;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 400px;
+}
+
+.file-input:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.file-name {
+  margin-top: 0.5rem;
+  color: #28a745;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.preview-section {
+  margin: 1.5rem 0;
+}
+
+.preview-table {
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.preview-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.preview-table th {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.preview-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.preview-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  justify-content: center;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+  box-shadow: 0 2px 8px rgba(0, 91, 179, 0.3);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #545b62;
+  box-shadow: 0 2px 8px rgba(84, 91, 98, 0.3);
+}
+
+.help-section {
+  background-color: #f0f8ff;
+  border-left: 4px solid #007bff;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1.5rem;
+}
+
+.help-section p {
+  margin: 0.5rem 0;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.help-section ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.help-section li {
+  margin: 0.25rem 0;
+}
+
+.template-buttons {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #b3d9ff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.template-buttons h4 {
+  margin-top: 0;
+  color: #0056b3;
+}
+
+.btn-template {
+  padding: 0.75rem 1rem;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.btn-template:hover {
+  background-color: #138496;
+  box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-template:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
