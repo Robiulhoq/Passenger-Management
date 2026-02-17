@@ -260,13 +260,13 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
                   <td>{formatDate(passenger.registrationDate)}</td>
                   <td>
                     <span className={`report-badge report-${(passenger.report || '').toLowerCase()}`}>
-                      {passenger.report}
+                      {passenger.report == "HELD-UP"? "NOT FOUND": passenger.report}
                     </span>
                   </td>
                   <td>{passenger.unfitCom}</td>
                   <td>
                     <span className={`status-badge status-${passenger.wafidStatus.toLowerCase()}`}>
-                      {passenger.wafidStatus}
+                      {passenger.wafidStatus == "Rejected"? "NOT-FOUND": passenger.wafidStatus == "On Hold"? "NEW": passenger.wafidStatus}
                     </span>
                   </td>
                   <td>{passenger.slipFileSubmit ? '✓' : '✗'}</td>
