@@ -1,12 +1,24 @@
 const Passenger = require('../models/Passenger');
 
-// Get all passengers
+// Get all passengers with pagination
 exports.getAllPassengers = async (req, res) => {
   try {
-    const passengers = await Passenger.find().sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Passenger.countDocuments();
+    const passengers = await Passenger.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
     res.status(200).json({
       success: true,
       count: passengers.length,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
       data: passengers
     });
   } catch (error) {

@@ -162,6 +162,53 @@
   font-size: 16px;
 }
 
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 15px 0;
+}
+
+.page-btn {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  min-width: 40px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #007bff;
+}
+
+.page-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.list-footer {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
 .table-wrapper {
   overflow-x: auto;
   margin-bottom: 15px;
@@ -324,5 +371,16 @@
   .btn-delete {
     padding: 4px 8px;
     font-size: 12px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .page-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 35px;
   }
 }

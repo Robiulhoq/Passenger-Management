@@ -60,9 +60,16 @@ function App() {
     }
   }, [selectedPassenger]);
 
-  const handleEditPassenger = (passenger) => {
-    setSelectedPassenger(passenger);
-    setActiveTab('form');
+  const handleEditPassenger = async (passenger) => {
+    try {
+      // Fetch full passenger data from MongoDB to ensure all fields are loaded
+      const fullPassengerData = await passengerService.getPassengerById(passenger._id);
+      setSelectedPassenger(fullPassengerData);
+      setActiveTab('form');
+    } catch (error) {
+      console.error('Error fetching passenger for edit:', error);
+      alert('Error loading passenger data for editing: ' + error.message);
+    }
   };
 
   const handleCancelEdit = () => {

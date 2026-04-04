@@ -6,10 +6,10 @@ const API_URL = "/api/passengers";
 
 
 const passengerService = {
-  getAllPassengers: async () => {
+  getAllPassengers: async (page = 1, limit = 10) => {
     try {
-      const response = await axios.get(API_URL);
-      return response.data.data;
+      const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching passengers:', error);
       throw error;

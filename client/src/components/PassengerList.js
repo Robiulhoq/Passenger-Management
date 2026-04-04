@@ -12,6 +12,46 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPassengers, setTotalPassengers] = useState(0);
+  const [pageSize] = useState(15); // Fixed page size
+
+  // Cache management
+  const CACHE_KEY = 'passengers_cache';
+  const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+  const getCachedData = () => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp, page } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_EXPIRY && page === currentPage) {
+          return data;
+        }
+      }
+    } catch (error) {
+      console.error('Error reading cache:', error);
+    }
+    return null;
+  };
+
+  const setCachedData = (data, page) => {
+    try {
+      const cacheData = {
+        data,
+        timestamp: Date.now(),
+        page
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  };
+
+  const clearCache = () => {
+    localStorage.removeItem(CACHE_KEY);
+  };
 
   // Format date to YYYY-MM-DD
   const formatDate = (date) => {
@@ -54,15 +94,43 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
   };
 
   useEffect(() => {
-    fetchPassengers();
+    clearCache(); // Clear cache on refresh
+    fetchPassengers(1);
   }, [refreshTrigger]);
 
-  const fetchPassengers = async () => {
+  useEffect(() => {
+    if (filterFromDate || filterToDate) {
+      // When filters are applied, we need to refetch with current page
+      fetchPassengers(currentPage);
+    }
+  }, [filterFromDate, filterToDate]);
+
+  const fetchPassengers = async (page = 1) => {
+    // Check cache first (only for non-search requests)
+    if (!searchQuery) {
+      const cachedData = getCachedData();
+      if (cachedData && page === currentPage) {
+        setPassengers(cachedData.data || []);
+        setTotalPassengers(cachedData.total || 0);
+        setTotalPages(cachedData.totalPages || 1);
+        setCurrentPage(page);
+        return;
+      }
+    }
+
     setLoading(true);
     setError('');
     try {
-      const data = await passengerService.getAllPassengers();
-      setPassengers(data || []);
+      const response = await passengerService.getAllPassengers(page, pageSize);
+      setPassengers(response.data || []);
+      setTotalPassengers(response.total || 0);
+      setTotalPages(response.totalPages || 1);
+      setCurrentPage(page);
+
+      // Cache the data (only for non-search requests)
+      if (!searchQuery) {
+        setCachedData(response, page);
+      }
     } catch (err) {
       setError('Failed to fetch passengers');
       console.error(err);
@@ -75,12 +143,15 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     const query = e.target.value;
     setSearchQuery(query);
     if (query.trim() === '') {
-      fetchPassengers();
+      fetchPassengers(1);
     } else {
       setLoading(true);
       try {
         const data = await passengerService.searchPassengers(query);
         setPassengers(data || []);
+        setCurrentPage(1);
+        setTotalPages(1);
+        setTotalPassengers(data.length || 0);
       } catch (err) {
         setError('Failed to search passengers');
       } finally {
@@ -89,11 +160,35 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     }
   };
 
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchPassengers(page);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this passenger?')) {
       try {
         await passengerService.deletePassenger(id);
-        setPassengers(passengers.filter(p => p._id !== id));
+        clearCache(); // Clear cache after deletion
+        // If we're on the last page and it's now empty, go to previous page
+        if (passengers.length === 1 && currentPage > 1) {
+          fetchPassengers(currentPage - 1);
+        } else {
+          fetchPassengers(currentPage);
+        }
         alert('Passenger deleted successfully');
       } catch (err) {
         setError('Failed to delete passenger');
@@ -296,8 +391,54 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
           </table>
         </div>
       )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && !searchQuery && (
+        <div className="pagination">
+          <button
+            className="page-btn"
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+
+            return (
+              <button
+                key={pageNum}
+                className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                onClick={() => handlePageChange(pageNum)}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          <button
+            className="page-btn"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
       <div className="list-footer">
-        Total: {passengers.length} passengers {sortedPassengers.length !== passengers.length && `(${sortedPassengers.length} filtered)`}
+        Total: {totalPassengers} passengers {sortedPassengers.length !== passengers.length && `(${sortedPassengers.length} filtered)`}
+        {!searchQuery && ` | Page ${currentPage} of ${totalPages}`}
       </div>
     </div>
   );
