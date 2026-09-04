@@ -12,6 +12,7 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
+  const [commissionFilter, setCommissionFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPassengers, setTotalPassengers] = useState(0);
@@ -231,6 +232,15 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
         return false;
       }
     }
+
+    const commission = Number(passenger.commission || 0);
+    if (commissionFilter === 'zero' && commission !== 0) {
+      return false;
+    }
+    if (commissionFilter === 'non-zero' && commission === 0) {
+      return false;
+    }
+
     return true;
   });
 
@@ -271,12 +281,25 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
             onChange={(e) => setFilterToDate(e.target.value)}
           />
         </div>
-        {(filterFromDate || filterToDate) && (
+        <div className="filter-group">
+          <label htmlFor="commissionFilter">Commission:</label>
+          <select
+            id="commissionFilter"
+            value={commissionFilter}
+            onChange={(e) => setCommissionFilter(e.target.value)}
+          >
+            <option value="all">All rows</option>
+            <option value="non-zero">Commission &gt; 0</option>
+            <option value="zero">Commission = 0</option>
+          </select>
+        </div>
+        {(filterFromDate || filterToDate || commissionFilter !== 'all') && (
           <button
             className="clear-filter-btn"
             onClick={() => {
               setFilterFromDate('');
               setFilterToDate('');
+              setCommissionFilter('all');
             }}
           >
             Clear Filter
@@ -285,7 +308,7 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
         <button
           className="export-btn"
           onClick={exportToExcel}
-          disabled={passengers.length === 0}
+          disabled={sortedPassengers.length === 0}
           title="Export visible/filtered data"
         >
           📥 Export Filtered
@@ -302,8 +325,12 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
 
       {error && <div className="error-message">{error}</div>}
 
-      {passengers.length === 0 ? (
-        <div className="no-data">No passengers found. Add a new passenger to get started.</div>
+      {sortedPassengers.length === 0 ? (
+        <div className="no-data">
+          {passengers.length === 0
+            ? 'No passengers found. Add a new passenger to get started.'
+            : 'No passengers match the selected filters.'}
+        </div>
       ) : (
         <div className="table-wrapper">
           <table className="passenger-table">
