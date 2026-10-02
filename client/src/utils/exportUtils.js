@@ -1,5 +1,12 @@
 import * as XLSX from 'xlsx';
 
+const getCommissionValue = (passenger) => {
+  const commission = passenger?.commission;
+  return commission && typeof commission === 'object' ? commission.value : commission;
+};
+
+const isZeroCommission = (passenger) => Number(getCommissionValue(passenger) || 0) === 0;
+
 const exportUtils = {
   // Export passengers to Excel
   exportPassengersToExcel: (passengers, filename = 'passengers.xlsx') => {
@@ -20,7 +27,7 @@ const exportUtils = {
         'Slip File Submit': passenger.slipFileSubmit ? 'Yes' : 'No',
         'Sender': passenger.sender || '',
         'Slip Payment Receive': passenger.slipPaymentReceive || 0,
-        'Commission': passenger.commission || 0,
+        'Commission': getCommissionValue(passenger) || 0,
         'Slip Payment Send': passenger.slipPaymentSend || 0,
         'Profit Margin': passenger.profitMargin || 0,
         'Code': passenger.code || '',
@@ -78,6 +85,11 @@ const exportUtils = {
       : `passengers-export-${timestamp}.xlsx`;
     
     return exportUtils.exportPassengersToExcel(passengers, filename || defaultFilename);
+  },
+
+  exportZeroCommissionToExcel: (passengers, filename = 'zero-commission-passengers.xlsx') => {
+    const zeroCommissionPassengers = (passengers || []).filter(isZeroCommission);
+    return exportUtils.exportPassengersToExcel(zeroCommissionPassengers, filename);
   }
 };
 

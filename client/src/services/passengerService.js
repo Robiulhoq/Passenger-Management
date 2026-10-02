@@ -1,14 +1,17 @@
 import axios from 'axios';
 import exportUtils from '../utils/exportUtils';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const API_URL = "/api/passengers";
-
+const apiHost = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const API_BASE = `${apiHost}/api/passengers`;
 
 const passengerService = {
-  getAllPassengers: async (page = 1, limit = 10) => {
+  getAllPassengers: async (page = 1, limit = 10, fromDate = '', toDate = '', commission = 'all') => {
     try {
-      const response = await axios.get(`${API_URL}?page=${page}&limit=${limit}`);
+      let url = `${API_BASE}?page=${page}&limit=${limit}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
+      if (commission !== 'all') url += `&commission=${commission}`;
+      const response = await axios.get(url);
       return response.data;
     } catch (error) {
       console.error('Error fetching passengers:', error);
@@ -18,7 +21,7 @@ const passengerService = {
 
   getPassengerById: async (id) => {
     try {
-      const response = await axios.get(`${API_URL}/${id}`);
+      const response = await axios.get(`${API_BASE}/${id}`);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching passenger:', error);
@@ -28,7 +31,7 @@ const passengerService = {
 
   createPassenger: async (data) => {
     try {
-      const response = await axios.post(API_URL, data);
+      const response = await axios.post(API_BASE, data);
       return response.data.data;
     } catch (error) {
       console.error('Error creating passenger:', error);
@@ -38,7 +41,7 @@ const passengerService = {
 
   updatePassenger: async (id, data) => {
     try {
-      const response = await axios.put(`${API_URL}/${id}`, data);
+      const response = await axios.put(`${API_BASE}/${id}`, data);
       return response.data.data;
     } catch (error) {
       console.error('Error updating passenger:', error);
@@ -48,7 +51,7 @@ const passengerService = {
 
   deletePassenger: async (id) => {
     try {
-      const response = await axios.delete(`${API_URL}/${id}`);
+      const response = await axios.delete(`${API_BASE}/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting passenger:', error);
@@ -58,7 +61,7 @@ const passengerService = {
 
   searchPassengers: async (query) => {
     try {
-      const response = await axios.get(`${API_URL}/search?query=${query}`);
+      const response = await axios.get(`${API_BASE}/search?query=${query}`);
       return response.data.data;
     } catch (error) {
       console.error('Error searching passengers:', error);
@@ -68,7 +71,7 @@ const passengerService = {
 
   bulkImportPassengers: async (data) => {
     try {
-      const response = await axios.post(`${API_URL}/bulk-import`, data);
+      const response = await axios.post(`${API_BASE}/bulk-import`, data);
       return response.data;
     } catch (error) {
       console.error('Error bulk importing passengers:', error);
@@ -78,8 +81,8 @@ const passengerService = {
 
   exportAllPassengers: async () => {
     try {
-      const passengers = await passengerService.getAllPassengers();
-      exportUtils.exportFilteredToExcel(passengers, 'all');
+      const response = await passengerService.getAllPassengers();
+      exportUtils.exportFilteredToExcel(response.data || [], 'all');
       return { success: true, message: 'Export successful' };
     } catch (error) {
       console.error('Error exporting passengers:', error);

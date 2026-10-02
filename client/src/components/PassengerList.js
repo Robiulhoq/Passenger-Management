@@ -12,6 +12,7 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
+  const [commissionFilter, setCommissionFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPassengers, setTotalPassengers] = useState(0);
@@ -61,7 +62,11 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
 
   // Export to Excel
   const exportToExcel = () => {
-    if (sortedPassengers.length === 0) {
+    const passengersToExport = commissionFilter === 'zero'
+      ? sortedPassengers.filter((passenger) => Number(passenger?.commission?.value ?? passenger?.commission ?? 0) === 0)
+      : sortedPassengers;
+
+    if (passengersToExport.length === 0) {
       alert('No data to export');
       return;
     }
@@ -75,7 +80,7 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
         filename = `passengers_export_${from}_to_${to}.xlsx`;
       }
 
-      exportUtils.exportPassengersToExcel(sortedPassengers, filename);
+      exportUtils.exportPassengersToExcel(passengersToExport, filename);
       alert('Export successful!');
     } catch (error) {
       alert('Export failed: ' + error.message);
@@ -93,21 +98,65 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     }
   };
 
+  const exportZeroCommissionPassengers = async () => {
+    try {
+      const response = await passengerService.getAllPassengers(
+        1,
+        10000,
+        filterFromDate,
+        filterToDate,
+        'zero'
+      );
+      const timestamp = new Date().toISOString().split('T')[0];
+      exportUtils.exportZeroCommissionToExcel(
+        response.data || [],
+        `zero_commission_passengers_${timestamp}.xlsx`
+      );
+      alert('Zero commission data exported successfully!');
+    } catch (error) {
+      alert('Export failed: ' + error.message);
+    }
+  };
+
   useEffect(() => {
     clearCache(); // Clear cache on refresh
     fetchPassengers(1);
   }, [refreshTrigger]);
 
   useEffect(() => {
-    if (filterFromDate || filterToDate) {
-      // When filters are applied, we need to refetch with current page
-      fetchPassengers(currentPage);
+    if (filterFromDate || filterToDate || commissionFilter !== 'all') {
+      // When filters are applied, reset to page 1 and refetch
+      setCurrentPage(1);
+      fetchPassengersWithDateFilter(1);
     }
-  }, [filterFromDate, filterToDate]);
+  }, [filterFromDate, filterToDate, commissionFilter]);
+
+  const fetchPassengersWithDateFilter = async (page = 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await passengerService.getAllPassengers(
+        page,
+        pageSize,
+        filterFromDate,
+        filterToDate,
+        commissionFilter
+      );
+      setPassengers(response.data || []);
+      setTotalPassengers(response.total || 0);
+      setTotalPages(response.totalPages || 1);
+      setCurrentPage(page);
+    } catch (err) {
+      setError('Failed to fetch passengers');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchPassengers = async (page = 1) => {
     // Check cache first (only for non-search requests)
-    if (!searchQuery) {
+    if (!searchQuery && !filterFromDate && !filterToDate) {
       const cachedData = getCachedData();
       if (cachedData && page === currentPage) {
         setPassengers(cachedData.data || []);
@@ -121,14 +170,14 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await passengerService.getAllPassengers(page, pageSize);
+      const response = await passengerService.getAllPassengers(page, pageSize, '', '', 'all');
       setPassengers(response.data || []);
       setTotalPassengers(response.total || 0);
       setTotalPages(response.totalPages || 1);
       setCurrentPage(page);
 
-      // Cache the data (only for non-search requests)
-      if (!searchQuery) {
+      // Cache the data (only for non-search and non-filtered requests)
+      if (!searchQuery && !filterFromDate && !filterToDate) {
         setCachedData(response, page);
       }
     } catch (err) {
@@ -148,10 +197,13 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
       setLoading(true);
       try {
         const data = await passengerService.searchPassengers(query);
-        setPassengers(data || []);
+        const filteredData = commissionFilter === 'zero'
+          ? (data || []).filter((passenger) => Number(passenger?.commission?.value ?? passenger?.commission ?? 0) === 0)
+          : data || [];
+        setPassengers(filteredData);
         setCurrentPage(1);
         setTotalPages(1);
-        setTotalPassengers(data.length || 0);
+        setTotalPassengers(filteredData.length || 0);
       } catch (err) {
         setError('Failed to search passengers');
       } finally {
@@ -162,7 +214,11 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
-      fetchPassengers(page);
+      if (filterFromDate || filterToDate || commissionFilter !== 'all') {
+        fetchPassengersWithDateFilter(page);
+      } else {
+        fetchPassengers(page);
+      }
     }
   };
 
@@ -219,19 +275,6 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
     } else {
       return aVal < bVal ? 1 : -1;
     }
-  }).filter(passenger => {
-    // Filter by date range if dates are specified
-    if (filterFromDate || filterToDate) {
-      const passengerDate = formatDate(passenger.registrationDate);
-      
-      if (filterFromDate && passengerDate < filterFromDate) {
-        return false;
-      }
-      if (filterToDate && passengerDate > filterToDate) {
-        return false;
-      }
-    }
-    return true;
   });
 
   if (loading && passengers.length === 0) {
@@ -271,12 +314,27 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
             onChange={(e) => setFilterToDate(e.target.value)}
           />
         </div>
-        {(filterFromDate || filterToDate) && (
+        <div className="filter-group">
+          <label htmlFor="commissionFilter">Commission:</label>
+          <select
+            id="commissionFilter"
+            value={commissionFilter}
+            onChange={(e) => setCommissionFilter(e.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="zero">Zero only</option>
+            <option value="nonzero">With commission</option>
+          </select>
+        </div>
+        {(filterFromDate || filterToDate || commissionFilter !== 'all') && (
           <button
             className="clear-filter-btn"
             onClick={() => {
               setFilterFromDate('');
               setFilterToDate('');
+              setCommissionFilter('all');
+              setCurrentPage(1);
+              fetchPassengers(1);
             }}
           >
             Clear Filter
@@ -297,6 +355,13 @@ const PassengerList = ({ refreshTrigger, editPassenger }) => {
           title="Export all passengers"
         >
           📤 Export All
+        </button>
+        <button
+          className="export-zero-btn"
+          onClick={exportZeroCommissionPassengers}
+          title="Export all passengers with zero commission"
+        >
+          📊 Export Zero Commission
         </button>
       </div>
 

@@ -79,6 +79,20 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
 .clear-filter-btn {
   padding: 8px 16px;
   background-color: #6c757d;
@@ -135,6 +149,22 @@
 .export-all-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.export-zero-btn {
+  padding: 8px 16px;
+  background-color: #6f42c1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.export-zero-btn:hover {
+  background-color: #59339d;
 }
 
 .error-message {

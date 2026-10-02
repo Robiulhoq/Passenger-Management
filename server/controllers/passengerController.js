@@ -1,14 +1,38 @@
 const Passenger = require('../models/Passenger');
 
-// Get all passengers with pagination
+// Get all passengers with pagination and date filtering
 exports.getAllPassengers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const fromDate = req.query.fromDate;
+    const toDate = req.query.toDate;
+    const commissionFilter = req.query.commission;
 
-    const total = await Passenger.countDocuments();
-    const passengers = await Passenger.find()
+    // Build filter object
+    const filter = {};
+    if (fromDate || toDate) {
+      filter.registrationDate = {};
+      if (fromDate) {
+        filter.registrationDate.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        // Add one day to include the entire toDate
+        const nextDay = new Date(toDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        filter.registrationDate.$lt = nextDay;
+      }
+    }
+
+    if (commissionFilter === 'zero') {
+      filter.commission = 0;
+    } else if (commissionFilter === 'nonzero') {
+      filter.commission = { $ne: 0 };
+    }
+
+    const total = await Passenger.countDocuments(filter);
+    const passengers = await Passenger.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
